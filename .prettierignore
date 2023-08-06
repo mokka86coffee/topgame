@@ -1,0 +1,7 @@
+build
+docs
+node_modules/
+yarn.lock
+.idea/
+.git/
+__/
