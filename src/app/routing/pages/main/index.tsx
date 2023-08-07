@@ -54,7 +54,10 @@ export const Main: React.FC = () => {
 
   const handleChangePage = useCallback((_event: React.ChangeEvent<unknown>, nextPage: number) => setPage(nextPage), []);
 
-  const handleSearchChange = useCallback(({ target }: React.ChangeEvent<HTMLInputElement>) => setSearch(target.value), []);
+  const handleSearchChange = useCallback(({ target }: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(target.value);
+    setPage(1);
+  }, []);
 
   return (
     <Container sx={{ my: 4 }}>

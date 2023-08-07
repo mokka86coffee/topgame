@@ -33,10 +33,6 @@ export const Person: React.FC = () => {
       .catch(noop);
   }, []);
 
-  useEffect(function onUnmount() {
-    return () => abortControllerRef.current?.abort?.();
-  }, []);
-
   const handleChange = useCallback((field: string, value: string) => setPerson((prev) => ({ ...prev, [field]: value })), []);
 
   const onSave = useCallback(() => localStorage.setItem(getLSPersonKey(personID!), JSON.stringify(person)), [personID, person]);
