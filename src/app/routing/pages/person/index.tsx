@@ -1,42 +1,66 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import Grid from '@mui/material/Grid';
 import { Button, CardActions, CardContent } from '@mui/material';
+import isEmpty from 'lodash/isEmpty';
+import noop from 'lodash/noop';
 
 import Typography from '@mui/material/Typography';
 import { Field } from './view/field';
+import { baseApi } from '../../constants';
+import { getLSPersonKey, getPersonFromLSByID } from '../../shared/utils';
+import { IPerson } from '../../shared/types';
 
 export const Person: React.FC = () => {
   const { personID } = useParams<{ personID: string }>();
 
-  const [person, setPerson] = useState<any>(null);
+  const [person, setPerson] = useState<IPerson>({} as IPerson);
+
+  const abortControllerRef = useRef<AbortController>(new AbortController());
 
   useEffect(function init() {
-    fetch(`https://swapi.dev/api/people/${personID}`)
+    const cachedPerson = getPersonFromLSByID(personID!);
+
+    if (cachedPerson) {
+      setPerson(cachedPerson);
+
+      return;
+    }
+
+    fetch(`${baseApi}/${personID}`, { signal: abortControllerRef.current.signal })
       .then((data) => data.json())
-      .then((data) => setPerson(data));
+      .then((data) => setPerson(data))
+      .catch(noop);
   }, []);
+
+  useEffect(function onUnmount() {
+    return () => abortControllerRef.current?.abort?.();
+  }, []);
+
+  const handleChange = useCallback((field: string, value: string) => setPerson((prev) => ({ ...prev, [field]: value })), []);
+
+  const onSave = useCallback(() => localStorage.setItem(getLSPersonKey(personID!), JSON.stringify(person)), [personID, person]);
 
   return (
     <Grid item xs={12} sm={4}>
       <CardContent>
-        {!person && <p>loading..</p>}
-        {person && (
+        {isEmpty(person) && <p>loading..</p>}
+        {!isEmpty(person) && (
           <>
             <Typography variant="subtitle1" component="p">
-              Name: <Field initValue={person.name} />
+              Name: <Field initValue={person.name} field="name" onChange={handleChange} />
             </Typography>
             <Typography variant="caption" component="p">
-              Hair color: <Field initValue={person.hair_color} />
+              Hair color: <Field initValue={person.hair_color} field="hair_color" onChange={handleChange} />
             </Typography>
             <Typography variant="caption" component="p">
-              Skin color: <Field initValue={person.skin_color} />
+              Skin color: <Field initValue={person.skin_color} field="skin_color" onChange={handleChange} />
             </Typography>
           </>
         )}
       </CardContent>
       <CardActions>
-        <Button>Сохранить</Button>
+        <Button onClick={onSave}>Сохранить</Button>
       </CardActions>
     </Grid>
   );
